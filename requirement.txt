@@ -1,0 +1,5 @@
+inflect==0.2.5
+pkg-resources==0.0.0
+PyMySQL==0.8.0
+sqlacodegen==1.1.6
+SQLAlchemy==1.2.2
