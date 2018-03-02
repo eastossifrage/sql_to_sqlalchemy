@@ -11,7 +11,7 @@
 - [利用 sqlacodegen 生成的 models.py ](https://github.com/eastossifrage/sql_to_sqlalchemy/blob/master/models.py)
 - [基础查询功能](https://github.com/eastossifrage/sql_to_sqlalchemy/blob/master/chapter001/employees.py)
 
-
+**未完待续...**，敬请期待后期的复杂的联合查询语句。
 -----
 ## 欢迎大家提供需要转变为 sqlalchemy 语法的 sql 语句。
 
