@@ -119,7 +119,7 @@ sql = "SELECT " + \
                 ") " + \
             "), " + \
             "0, " + \
-            "s.salary - ( " + \
+            "( " + \
                 "SELECT " + \
                     "s.salary " + \
                 "FROM " + \
