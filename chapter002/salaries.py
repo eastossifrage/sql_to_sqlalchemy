@@ -167,9 +167,9 @@ alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.firs
                                         session.query(s2.salary).filter(s2.emp_no==Employee.emp_no,
                                         func.date_sub(text("date('1997-12-01'), interval 1 year")).
                                         between(s2.from_date, s2.to_date))
-                             else (s1.salary - (session.query(s2.salary).
+                             else session.query(s2.salary).
         filter(s2.emp_no==Employee.emp_no, func.date_sub(text("date('1997-12-01'), interval 1 year")).
-               between(s2.from_date, s2.to_date))))).label("last_salary")).\
+               between(s2.from_date, s2.to_date))).label("last_salary")).\
     filter(Employee.emp_no==s1.emp_no , Title.emp_no==s1.emp_no,
            or_(Employee.emp_no==10004,
                Employee.emp_no==10001,
@@ -182,6 +182,57 @@ alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.firs
 for d in zip(sql_data, alchemy_data):
     print(d)
 print('第三例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+
+'''-------------------------------------------------------------------------------------------------'''
+
+'''----------------------------------------------第四例-----------------------------------------------
+    功能说明：
+    查询主键为 10001 的员工的当年年薪，上年年薪及差额，需对 salaries 表看做两个表进行联合查询。
+    结果是： 返回字段为 emp_no, from_date, to_date, salary, last_salary(上年年薪), difference(差额)。
+    提示：对 salaries 表同时进行两次及以上查询，用到了 aliased
+'''
+
+'''使用 sql 语句方式进行查询'''
+sql = "SELECT " + \
+        "s.emp_no, " + \
+        "s.from_date, " + \
+        "s.to_date, " + \
+        "s.salary, " + \
+        "IF ( " + \
+            "ISNULL(s1.salary), " + \
+            "0, " + \
+            "s1.salary " + \
+        ") AS last_salary, " + \
+        "( " + \
+            "s.salary - " + \
+                "IF ( " + \
+                "ISNULL(s1.salary), " + \
+                "0, " + \
+                "s1.salary " + \
+            ") " + \
+        ") AS difference " + \
+        "FROM " + \
+            "salaries s " + \
+        "LEFT JOIN salaries s1 ON s.emp_no = s1.emp_no " + \
+        "AND YEAR (s1.from_date) = YEAR (s.from_date) - 1 " + \
+        "WHERE " + \
+        "s.emp_no = 10001"
+sql_data = [(d.emp_no, d.from_date, d.to_date, d.salary, d.last_salary, d.difference)
+            for d in session.execute(sql)]
+
+'''使用 sqlalchemy 方式进行查询'''
+s1 = aliased(Salary)
+s2 = aliased(Salary)
+alchemy_data = session.query(s1.emp_no, s1.from_date, s1.to_date, s1.salary,
+                             func.IF(func.isnull(s2.salary), 0, s2.salary).label("last_salary"),
+                             (s1.salary - (func.IF(func.isnull(s2.salary), 0, s2.salary))).label("difference")).\
+    outerjoin(s2, and_(s2.emp_no==s1.emp_no, func.year(s2.from_date)==func.year(s1.from_date)-1)).\
+    filter(s1.emp_no==10001).all()
+
+'''比较两个结果，应该是True'''
+for d in zip(sql_data, alchemy_data):
+    print(d)
+print('第四例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 session.commit()
