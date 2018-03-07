@@ -16,15 +16,16 @@ from sqlalchemy.orm import aliased
 '''
 
 '''使用 sql 语句方式进行查询'''
-sql = "SELECT " + \
-            "emp.*, " + \
-            "CONCAT_WS('--', s.from_date, s.to_date) AS 'times', " + \
-            "s.salary " + \
-        "FROM " + \
-            "employees emp " + \
-        "JOIN salaries s ON emp.emp_no = s.emp_no " + \
-        "WHERE " + \
-            "emp.emp_no = 10004 "
+sql = """
+        SELECT
+            emp.*, CONCAT_WS('--', s.from_date, s.to_date) AS 'times',
+            s.salary
+        FROM
+            employees emp
+        JOIN salaries s ON emp.emp_no = s.emp_no
+        WHERE
+            emp.emp_no = 10004
+"""
 sql_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.hire_date, d.times, d.salary)
             for d in session.execute(sql)]
 
@@ -49,20 +50,22 @@ print('第一例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 '''
 
 '''使用 sql 语句方式进行查询'''
-sql = "SELECT " + \
-            "emp.*, t.title, " + \
-            "CONCAT_WS('--', s.from_date, s.to_date) AS 'times', " + \
-            "s.salary " + \
-        "FROM " + \
-            "employees emp " + \
-        "JOIN titles t ON emp.emp_no = t.emp_no " + \
-        "JOIN salaries s ON emp.emp_no = s.emp_no " + \
-        "WHERE " + \
-            "emp.emp_no = 10004 " + \
-        "AND (" + \
-            "s.from_date BETWEEN t.from_date " + \
-            "AND t.to_date" + \
-        ")"
+sql = """
+        SELECT
+            emp.*, t.title,
+            CONCAT_WS('--', s.from_date, s.to_date) AS 'times',
+            s.salary
+        FROM
+            employees emp
+        JOIN titles t ON emp.emp_no = t.emp_no
+        JOIN salaries s ON emp.emp_no = s.emp_no
+        WHERE
+            emp.emp_no = 10004
+        AND (
+            s.from_date BETWEEN t.from_date
+            AND t.to_date
+        )
+"""
 sql_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.hire_date, d.title, d.times, d.salary)
             for d in session.execute(sql)]
 
@@ -95,65 +98,68 @@ print('第二例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 '''
 
 '''使用 sql 语句方式进行查询'''
-sql = "SELECT " + \
-        "emp.*, t.title, " + \
-        "s.from_date, " + \
-        "s.to_date, " + \
-        "s.salary, " + \
-        "IF ( " + \
-            "ISNULL( " + \
-                "( " + \
-                    "SELECT " + \
-                        "s.salary " + \
-                    "FROM " + \
-                        "salaries s " + \
-                    "WHERE " + \
-                        "s.emp_no = emp.emp_no " + \
-                    "AND ( " + \
-                        "DATE_SUB( " + \
-                            "DATE('1997-12-01'), " + \
-                            "INTERVAL 1 YEAR " + \
-                        ") BETWEEN s.from_date " + \
-                        "AND s.to_date " + \
-                    ") " + \
-                ") " + \
-            "), " + \
-            "0, " + \
-            "( " + \
-                "SELECT " + \
-                    "s.salary " + \
-                "FROM " + \
-                    "salaries s " + \
-                "WHERE " + \
-                    "s.emp_no = emp.emp_no " + \
-                "AND ( " + \
-                    "DATE_SUB( " + \
-                        "DATE('1997-12-01'), " + \
-                        "INTERVAL 1 YEAR " + \
-                    ") BETWEEN s.from_date " + \
-                    "AND s.to_date " + \
-                ") " + \
-            ") " + \
-        ") AS last_salary " + \
-        "FROM " + \
-            "employees emp " + \
-        "JOIN titles t ON emp.emp_no = t.emp_no " + \
-        "JOIN salaries s ON emp.emp_no = s.emp_no " + \
-        "WHERE " + \
-            "( " + \
-                "emp.emp_no = 10004 " + \
-                "OR emp.emp_no = 10001 " + \
-                "OR emp.emp_no = 10006 " + \
-                "OR emp.emp_no = 10003 " + \
-            ") " + \
-        "AND ( " + \
-            "DATE('1997-12-01') BETWEEN s.from_date " + \
-            "AND s.to_date " + \
-        ") " + \
-        "AND ( " + \
-            "DATE('1997-12-01') BETWEEN t.from_date " + \
-            "AND t.to_date " + \
-        ")"
+sql = """
+        SELECT
+            emp.*, t.title,
+            s.from_date,
+            s.to_date,
+            s.salary,
+        
+        IF (
+            ISNULL(
+                (
+                    SELECT
+                        s.salary
+                    FROM
+                        salaries s
+                    WHERE
+                        s.emp_no = emp.emp_no
+                    AND (
+                        DATE_SUB(
+                            DATE('1997-12-01'),
+                            INTERVAL 1 YEAR
+                        ) BETWEEN s.from_date
+                        AND s.to_date
+                    )
+                )
+            ),
+            0,
+            (
+                SELECT
+                    s.salary
+                FROM
+                    salaries s
+                WHERE
+                    s.emp_no = emp.emp_no
+                AND (
+                    DATE_SUB(
+                        DATE('1997-12-01'),
+                        INTERVAL 1 YEAR
+                    ) BETWEEN s.from_date
+                    AND s.to_date
+                )
+            )
+        ) AS last_salary
+        FROM
+            employees emp
+        JOIN titles t ON emp.emp_no = t.emp_no
+        JOIN salaries s ON emp.emp_no = s.emp_no
+        WHERE
+            (
+                emp.emp_no = 10004
+                OR emp.emp_no = 10001
+                OR emp.emp_no = 10006
+                OR emp.emp_no = 10003
+            )
+        AND (
+            DATE('1997-12-01') BETWEEN s.from_date
+            AND s.to_date
+        )
+        AND (
+            DATE('1997-12-01') BETWEEN t.from_date
+            AND t.to_date
+        )
+        """
 sql_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.hire_date, d.title, d.from_date, d.to_date,
              d.salary, d.last_salary)
             for d in session.execute(sql)]
@@ -193,30 +199,33 @@ print('第三例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 '''
 
 '''使用 sql 语句方式进行查询'''
-sql = "SELECT " + \
-        "s.emp_no, " + \
-        "s.from_date, " + \
-        "s.to_date, " + \
-        "s.salary, " + \
-        "IF ( " + \
-            "ISNULL(s1.salary), " + \
-            "0, " + \
-            "s1.salary " + \
-        ") AS last_salary, " + \
-        "( " + \
-            "s.salary - " + \
-                "IF ( " + \
-                "ISNULL(s1.salary), " + \
-                "0, " + \
-                "s1.salary " + \
-            ") " + \
-        ") AS difference " + \
-        "FROM " + \
-            "salaries s " + \
-        "LEFT JOIN salaries s1 ON s.emp_no = s1.emp_no " + \
-        "AND YEAR (s1.from_date) = YEAR (s.from_date) - 1 " + \
-        "WHERE " + \
-        "s.emp_no = 10001"
+sql = """
+        SELECT
+            s.emp_no,
+            s.from_date,
+            s.to_date,
+            s.salary,
+        
+        IF (
+            ISNULL(s1.salary),
+            0,
+            s1.salary
+        ) AS last_salary,
+         (
+            s.salary -
+            IF (
+                ISNULL(s1.salary),
+                0,
+                s1.salary
+            )
+        ) AS difference
+        FROM
+            salaries s
+        LEFT JOIN salaries s1 ON s.emp_no = s1.emp_no
+        AND YEAR (s1.from_date) = YEAR (s.from_date) - 1
+        WHERE
+            s.emp_no = 10001
+        """
 sql_data = [(d.emp_no, d.from_date, d.to_date, d.salary, d.last_salary, d.difference)
             for d in session.execute(sql)]
 

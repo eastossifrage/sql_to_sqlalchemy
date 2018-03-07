@@ -167,8 +167,17 @@ print('第六例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 '''
 
 '''使用 sql 语句方式进行查询'''
-sql = "select * from employees where last_name like 'N%te_%' and first_name in ('Jaewon', 'os373.cn') " \
-      "and birth_date like '1955%' and hire_date like '%05-30' "
+sql = """
+        SELECT
+            *
+        FROM
+            employees
+        WHERE
+            last_name LIKE 'N%te_%'
+        AND first_name IN ('Jaewon', 'os373.cn')
+        AND birth_date LIKE '1955%'
+        AND hire_date LIKE '%05-30'
+"""
 sql_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.hire_date) for d in session.execute(sql)]
 
 '''使用 sqlalchemy 方式进行查询'''
@@ -202,9 +211,21 @@ print('第七例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 '''
 
 '''使用 sql 语句方式进行查询'''
-sql = "select count(*) from employees where " \
-      "(last_name like 'N%te_%' and first_name in ('Jaewon', 'os373.cn')) " \
-      "or (birth_date like '1955%' and hire_date like '%05-30')"
+sql = """
+        SELECT
+            count(*)
+        FROM
+            employees
+        WHERE
+            (
+                last_name LIKE 'N%te_%'
+                AND first_name IN ('Jaewon', 'os373.cn')
+            )
+        OR (
+            birth_date LIKE '1955%'
+            AND hire_date LIKE '%05-30'
+        )
+"""
 sql_data = [d for d in session.execute(sql)][0][0]
 
 '''使用 sqlalchemy 方式进行查询'''
@@ -243,10 +264,28 @@ print('第八例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 '''
 
 '''使用 sql 语句方式进行查询'''
-sql = "select * from employees " \
-      "where (last_name like 'N%te_%' and first_name in ('Jaewon', 'os373.cn')) " \
-      "or (birth_date like '1955%' and hire_date like '%05-30') " \
-      "group by last_name, gender, hire_date, emp_no, birth_date, first_name"
+sql = """
+        SELECT
+            *
+        FROM
+            employees
+        WHERE
+            (
+                last_name LIKE 'N%te_%'
+                AND first_name IN ('Jaewon', 'os373.cn')
+            )
+        OR (
+            birth_date LIKE '1955%'
+            AND hire_date LIKE '%05-30'
+        )
+        GROUP BY
+            last_name,
+            gender,
+            hire_date,
+            emp_no,
+            birth_date,
+            first_name 
+"""
 sql_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.hire_date) for d in session.execute(sql)]
 
 '''使用 sqlalchemy 方式进行查询'''
