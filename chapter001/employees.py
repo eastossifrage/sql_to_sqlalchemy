@@ -304,5 +304,42 @@ for d in zip(sql_data, alchemy_data):
 print('第九例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
+
+'''-------------------------------------------第十例--------------------------------------------------
+    功能说明：
+    查询当前还在职的员工的信息，在职的一个条件是 titles 表中的 to_date 字段为 '9999-01-01'。
+    结果是： 返回字段为 emp_no, birth_date, first_name, last_name, gender, 
+    hire_date, title, from_date, to_date值为一个列表。
+    提示：
+        需要用到 employees, titles 两个表联合查询
+'''
+
+'''使用 sql 语句方式进行查询'''
+sql = """
+        SELECT
+            e.*, t.title,
+            t.from_date,
+            t.to_date
+        FROM
+            employees e
+        JOIN titles t ON e.emp_no = t.emp_no
+        WHERE
+            t.to_date = '9999-01-01'
+        LIMIT 10
+"""
+sql_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.hire_date,
+             d.title, d.from_date, d.to_date) for d in session.execute(sql)]
+
+'''使用 sqlalchemy 方式进行查询'''
+alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.first_name, Employee.last_name,
+                             Employee.gender, Employee.hire_date, Title.title, Title.from_date, Title.to_date).\
+    join(Title, Employee.emp_no==Title.emp_no).filter(Title.to_date=='9999-01-01').limit(10).all()
+
+'''比较两个结果，应该是True'''
+for d in zip(sql_data, alchemy_data):
+    print(d)
+print('第十例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+
+'''-------------------------------------------------------------------------------------------------'''
 session.commit()
 session.close()
