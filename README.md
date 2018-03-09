@@ -11,6 +11,7 @@
 - [利用 sqlacodegen 生成的 models.py ](https://github.com/eastossifrage/sql_to_sqlalchemy/blob/master/models.py)
 - [基础查询功能](https://github.com/eastossifrage/sql_to_sqlalchemy/blob/master/chapter001/employees.py)
 - [多表联合查询功能--基于salaries表](https://github.com/eastossifrage/sql_to_sqlalchemy/blob/master/chapter002/salaries.py)
+- [多表联合查询功能--基于departments表](https://github.com/eastossifrage/sql_to_sqlalchemy/blob/master/chapter002/departments.py)
 
 **未完待续...**，敬请期待后期的复杂的联合查询语句。
 -----
