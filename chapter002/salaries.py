@@ -94,7 +94,8 @@ print('第二例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
         1、if else 三目运算符的使用。
         2、func.date_sub 的使用。
         3、text 可以使用原始的 sql 语句。
-        4、对 salaries 表同时进行两次及以上查询，用到了 aliased
+        4、对 salaries 表同时进行两次及以上查询，用到了 aliased。
+        5、使用 IFNULL 函数。
 '''
 
 '''使用 sql 语句方式进行查询'''
@@ -104,9 +105,7 @@ sql = """
             s.from_date,
             s.to_date,
             s.salary,
-        
-        IF (
-            ISNULL(
+            IFNULL(
                 (
                     SELECT
                         s.salary
@@ -121,25 +120,9 @@ sql = """
                         ) BETWEEN s.from_date
                         AND s.to_date
                     )
-                )
-            ),
-            0,
-            (
-                SELECT
-                    s.salary
-                FROM
-                    salaries s
-                WHERE
-                    s.emp_no = emp.emp_no
-                AND (
-                    DATE_SUB(
-                        DATE('1997-12-01'),
-                        INTERVAL 1 YEAR
-                    ) BETWEEN s.from_date
-                    AND s.to_date
-                )
-            )
-        ) AS last_salary
+                ),
+                0
+            ) AS last_salary
         FROM
             employees emp
         JOIN titles t ON emp.emp_no = t.emp_no
@@ -165,6 +148,8 @@ sql_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.hire
             for d in session.execute(sql)]
 
 '''使用 sqlalchemy 方式进行查询'''
+
+'''方法一：使用 if else 三目运算符'''
 s1 = aliased(Salary)
 s2 = aliased(Salary)
 alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.first_name,
@@ -183,6 +168,44 @@ alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.firs
                Employee.emp_no==10003),
            func.date('1997-12-01').between(s1.from_date, s1.to_date),
            func.date('1997-12-01').between(Title.from_date, Title.to_date)).all()
+
+'''===============================以下是两种错误方法================================================'''
+'''方法二：使用 IFNULL 函数，这是一种错误的方法，由于使用 aliased ，在 from 之后将会出现另一条 IFNULL 语句, 
+数据本身会提示错误——“Every derived table must have its own alias”
+s1 = aliased(Salary)
+s2 = aliased(Salary)
+alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.first_name,
+                                 Employee.last_name, Employee.gender, Employee.hire_date, Title.title,
+                                 s1.from_date, s1.to_date, s1.salary, func.IFNULL(
+                                        session.query(s2.salary).filter(s2.emp_no==Employee.emp_no,
+                                        func.date_sub(text("date('1997-12-01'), interval 1 year")).
+                                        between(s2.from_date, s2.to_date)), 0).label("last_salary")).\
+    filter(Employee.emp_no==s1.emp_no , Title.emp_no==s1.emp_no,
+           or_(Employee.emp_no==10004,
+               Employee.emp_no==10001,
+               Employee.emp_no==10006,
+               Employee.emp_no==10003),
+           func.date('1997-12-01').between(s1.from_date, s1.to_date),
+           func.date('1997-12-01').between(Title.from_date, Title.to_date)).all()
+'''
+
+
+'''方法三：使用 IFNULL 函数，这是一种错误的方法， sqlalchemy 本事不支持这种语法，出现错误提示——
+别名为last_salary的字段的 “select 语句” “returned no FROM clauses due to auto-correlation;”
+alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.first_name,
+                                 Employee.last_name, Employee.gender, Employee.hire_date, Title.title,
+                                 Salary.from_date, Salary.to_date, Salary.salary, func.IFNULL(
+                                        session.query(Salary.salary).filter(Salary.emp_no==Employee.emp_no,
+                                        func.date_sub(text("date('1997-12-01'), interval 1 year")).
+                                        between(Salary.from_date, Salary.to_date)), 0).label("last_salary")).\
+    filter(Employee.emp_no==Salary.emp_no , Title.emp_no==Salary.emp_no,
+           or_(Employee.emp_no==10004,
+               Employee.emp_no==10001,
+               Employee.emp_no==10006,
+               Employee.emp_no==10003),
+           func.date('1997-12-01').between(Salary.from_date, Salary.to_date),
+           func.date('1997-12-01').between(Title.from_date, Title.to_date)).all()
+'''
 
 '''比较两个结果，应该是True'''
 for d in zip(sql_data, alchemy_data):
