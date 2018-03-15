@@ -4,7 +4,7 @@ __blog__ = 'http://www.os373.cn'
 
 from models import session, Employee, Department, DeptEmp, DeptManager, Salary, Title
 import operator
-
+from sqlalchemy import case
 
 '''----------------------------------------------第一例-----------------------------------------------
     功能说明：
@@ -48,6 +48,58 @@ print('第二例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------第三例--------------------------------------------------
     功能说明：
+    对 employees 表进行查询，结果是：从第 4 行开始查询，返回之后的 10 行数据！值为一个列表。
+    提示： 重点是增加了 case when then end 的用法。
+'''
+
+'''使用 sql 语句方式进行查询'''
+sql = '''
+    SELECT
+        e.emp_no,
+        e.birth_date,
+        e.first_name,
+        e.last_name,
+        (
+            CASE e.gender
+            WHEN 'M' THEN
+                'nan'
+            WHEN 'F' THEN
+                'nv'
+            ELSE
+                'qita'
+            END
+        ) as gender,
+        e.hire_date
+    FROM
+        employees e
+    LIMIT 10 OFFSET 4
+'''
+sql_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.hire_date) for d in session.execute(sql)]
+
+'''使用 sqlalchemy 方式进行查询'''
+'''第一种方法
+alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.first_name, Employee.last_name,
+                             case([(Employee.gender=='M', 'nan'), (Employee.gender=='F', 'nv')],
+                                  else_='qita').label('gender'),
+                             Employee.hire_date).limit(10).offset(4).all()
+'''
+
+'''第二种方法'''
+alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.first_name, Employee.last_name,
+                             case({'M': 'nan', 'F': 'nv'},
+                                  value=Employee.gender,
+                                  else_='qita').label('gender'),
+                             Employee.hire_date).limit(10).offset(4).all()
+
+'''比较两个结果，应该是True'''
+for d in zip(sql_data, alchemy_data):
+    print(d)
+print('第三例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+
+'''-------------------------------------------------------------------------------------------------'''
+
+'''-------------------------------------------第四例--------------------------------------------------
+    功能说明：
     使用一个精确参数对 employees 表进行查询(搜索字段 last_name 为 'Nooteboom' 的内容)，
     结果是： 返回该参数对应的第一条数据！仅仅是第一条数据！
 '''
@@ -63,11 +115,11 @@ alchemy_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.
 '''比较两个结果，应该是True'''
 for d in zip(sql_data, alchemy_data):
     print(d)
-print('第三例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+print('第四例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 
-'''-------------------------------------------第四例--------------------------------------------------
+'''-------------------------------------------第五例--------------------------------------------------
     功能说明：
     使用一个精确参数对 employees 表进行查询(搜索字段 last_name 为 'Nooteboom' 的内容)，
     结果是： 返回该参数对应的所有数据！所有数据！值为一个列表。
@@ -94,11 +146,11 @@ alchemy_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.
 '''比较两个结果，应该是True'''
 for d in zip(sql_data, alchemy_data):
     print(d)
-print('第四例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+print('第五例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 
-'''-------------------------------------------第五例--------------------------------------------------
+'''-------------------------------------------第六例--------------------------------------------------
     功能说明：
     使用两个及以上的精确参数对 employees 表进行查询(搜索字段 last_name 为 'Nooteboom' 
     并且字段 first_name 为 'Pohua' 的内容)，
@@ -124,11 +176,11 @@ alchemy_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.
 '''比较两个结果，应该是True'''
 for d in zip(sql_data, alchemy_data):
     print(d)
-print('第五例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+print('第六例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 
-'''-------------------------------------------第六例--------------------------------------------------
+'''-------------------------------------------第七例--------------------------------------------------
     功能说明：
     使用一个模糊参数对 employees 表进行查询，结果是： 返回该参数对应的所有数据！所有数据！值为一个列表。
     提示：
@@ -149,11 +201,11 @@ alchemy_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.
 '''比较两个结果，应该是True'''
 for d in zip(sql_data, alchemy_data):
     print(d)
-print('第六例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+print('第七例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 
-'''-------------------------------------------第七例--------------------------------------------------
+'''-------------------------------------------第八例--------------------------------------------------
     功能说明：
     使用两个及以上模糊参数对 employees 表进行查询，查询字段 last_name 近似于 'N%te_%'，
     并且字段 first_name 在 ('Jaewon', 'os373.cn') 里，同时，
@@ -191,11 +243,11 @@ alchemy_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.
 '''比较两个结果，应该是True'''
 for d in zip(sql_data, alchemy_data):
     print(d)
-print('第七例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+print('第八例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 
-'''-------------------------------------------第八例--------------------------------------------------
+'''-------------------------------------------第九例--------------------------------------------------
     功能说明：
     使用两个及以上模糊参数对 employees 表进行查询，查询字段 last_name 近似于 'N%te_%'，
     并且字段 first_name 在 ('Jaewon', 'os373.cn') 里的员工信息，或者是，
@@ -247,11 +299,11 @@ alchemy_data = session.query(func.count("*")).filter(or_(and_(Employee.last_name
 
 '''比较两个结果，应该是True'''
 print(sql_data, alchemy_data)
-print('第八例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+print('第九例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 
-'''-------------------------------------------第九例--------------------------------------------------
+'''-------------------------------------------第十例--------------------------------------------------
     功能说明：
     使用两个及以上模糊参数对 employees 表进行查询，查询字段 last_name 近似于 'N%te_%'，
     并且字段 first_name 在 ('Jaewon', 'os373.cn') 里的员工信息，或者是，
@@ -301,11 +353,11 @@ alchemy_data = [(d.emp_no, d.birth_date, d.first_name, d.last_name, d.gender, d.
 '''比较两个结果，应该是True'''
 for d in zip(sql_data, alchemy_data):
     print(d)
-print('第九例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+print('第十例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 
-'''-------------------------------------------第十例--------------------------------------------------
+'''-------------------------------------------第十一例--------------------------------------------------
     功能说明：
     查询当前还在职的员工的信息，在职的一个条件是 titles 表中的 to_date 字段为 '9999-01-01'。
     结果是： 返回字段为 emp_no, birth_date, first_name, last_name, gender, 
@@ -338,7 +390,7 @@ alchemy_data = session.query(Employee.emp_no, Employee.birth_date, Employee.firs
 '''比较两个结果，应该是True'''
 for d in zip(sql_data, alchemy_data):
     print(d)
-print('第十例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
+print('第十一例结果是：{}'.format(operator.eq(sql_data, alchemy_data)))
 
 '''-------------------------------------------------------------------------------------------------'''
 session.commit()
