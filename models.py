@@ -77,7 +77,8 @@ class Title(Base):
 
 
 # 初始化数据库连接:
-engine = create_engine('mysql+pymysql://root:ossifrage@127.0.0.1:3306/employees', echo=True)
+engine = create_engine('mysql+pymysql://ousikongjian:{}@127.0.0.1:3306/employees'.format('hawk@#'), echo=True)
 # 创建DBSession类型:
 DBSession = sessionmaker(bind=engine)
 session = DBSession()
+
